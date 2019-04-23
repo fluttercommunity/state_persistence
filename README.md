@@ -17,6 +17,11 @@ methods for saving and loading data. E.g `shared_preferences` or
 `sqflite`. For those of you that are ambitious you could even 
 store your state on the web or even in Firebase.
 
+To change the persisted state simply modify the values in the 
+data map. These changes will automatically be persisted to disk
+based on the `saveTimeout` given to the `PersistedAppState` widget.
+By default this value is `500` milliseconds. This timeout is used
+to stop disk thrashing on multiple map changes in quick succession.  
 
 ### Example
 

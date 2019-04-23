@@ -7,8 +7,7 @@ import 'dart:io' show Directory, File;
 
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart'
-    show getApplicationDocumentsDirectory;
+import 'package:path_provider/path_provider.dart' show getApplicationDocumentsDirectory;
 
 Directory _appDataDir;
 
@@ -39,8 +38,7 @@ class PersistedAppState extends StatefulWidget {
   /// Used to fetch the AsyncSnapshot of the persisted data.
   /// This allows you to monitor the progress of the loading data.
   static AsyncSnapshot<PersistedData> snapshot(BuildContext context) {
-    final _PersistedScope scope =
-        context.inheritFromWidgetOfExactType(_PersistedScope);
+    final _PersistedScope scope = context.inheritFromWidgetOfExactType(_PersistedScope);
     return scope.snapshot;
   }
 
@@ -67,8 +65,7 @@ class _PersistedAppState extends State<PersistedAppState> {
   }
 
   void _loadData() {
-    _future = PersistedData.load(widget.storage, widget.saveTimeout)
-        .then((result) => _data = result);
+    _future = PersistedData.load(widget.storage, widget.saveTimeout).then((result) => _data = result);
   }
 
   @override
@@ -128,8 +125,7 @@ class PersistedData extends MapBase<String, dynamic> {
   final Duration _saveTimeout;
   Timer _saveTask;
 
-  static Future<PersistedData> load(
-      PersistedStateStorage storage, Duration saveTimeout) async {
+  static Future<PersistedData> load(PersistedStateStorage storage, Duration saveTimeout) async {
     return PersistedData._(storage, await storage.load(), saveTimeout);
   }
 
@@ -179,9 +175,11 @@ abstract class PersistedStateStorage {
 
 /// Uses the default [JsonCodec], to store the persisted state.
 class JsonFileStorage extends PersistedStateStorage {
-  const JsonFileStorage([this.filename = 'data.json']);
+  const JsonFileStorage({this.filename = 'data.json', this.initialData = const {}})
+      : assert(filename != null && initialData != null);
 
   final String filename;
+  final Map<String, dynamic> initialData;
 
   Future<File> get stateFile async {
     _appDataDir ??= await getApplicationDocumentsDirectory();
@@ -191,7 +189,7 @@ class JsonFileStorage extends PersistedStateStorage {
   @override
   Future<Map<String, dynamic>> load() {
     return stateFile.then((file) async {
-      return await file.exists() ? json.decode(await file.readAsString()) : {};
+      return await file.exists() ? json.decode(await file.readAsString()) : initialData;
     });
   }
 

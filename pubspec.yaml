@@ -2,7 +2,7 @@ name: state_persistence
 description: Persist state across app launches. By default this library store
   state as a local JSON file called `data.json` in the applications
   data directory.
-version: 0.0.2
+version: 0.0.3
 authors:
   - Flutter Community <community@flutter.zone>
   - Simon Lightfoot <simon@devangels.london>

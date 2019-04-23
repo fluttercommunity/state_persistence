@@ -7,7 +7,9 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PersistedAppState(
-      storage: JsonFileStorage(),
+      storage: JsonFileStorage(initialData: {
+        'tab': 1,
+      }),
       child: MaterialApp(
         title: 'Persistent Tab Example',
         theme: ThemeData(primarySwatch: Colors.blue),

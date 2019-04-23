@@ -5,3 +5,7 @@
 
 ## 0.0.2
   * Minor pub suggested improvements.
+
+## 0.0.3
+  * Added support for Initial Data.
+ 
