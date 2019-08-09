@@ -189,7 +189,7 @@ class JsonFileStorage extends PersistedStateStorage {
   @override
   Future<Map<String, dynamic>> load() {
     return stateFile.then((file) async {
-      return await file.exists() ? json.decode(await file.readAsString()) : initialData;
+      return await file.exists() ? json.decode(await file.readAsString()) : Map.from(initialData);
     });
   }
 
@@ -206,9 +206,7 @@ class JsonFileStorage extends PersistedStateStorage {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is JsonFileStorage &&
-            runtimeType == other.runtimeType &&
-            filename == other.filename;
+        other is JsonFileStorage && runtimeType == other.runtimeType && filename == other.filename;
   }
 
   @override
