@@ -14,4 +14,7 @@
 
 ## 0.0.5
   * Added Flutter Community banner.
-  
+
+## 0.0.6
+  * Revert `path` dependency to `1.6.2`
+
