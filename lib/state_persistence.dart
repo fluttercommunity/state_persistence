@@ -126,7 +126,17 @@ class PersistedData extends MapBase<String, dynamic> {
   Timer _saveTask;
 
   static Future<PersistedData> load(PersistedStateStorage storage, Duration saveTimeout) async {
-    return PersistedData._(storage, await storage.load(), saveTimeout);
+    return PersistedData._(
+        storage,
+        await storage.load().catchError((e, st) {
+          FlutterError.reportError(FlutterErrorDetails(
+            exception: e,
+            stack: st,
+            library: 'state_persistence',
+            silent: true,
+          ));
+        }),
+        saveTimeout);
   }
 
   @override
@@ -158,7 +168,16 @@ class PersistedData extends MapBase<String, dynamic> {
 
   void persist() {
     _saveTask?.cancel();
-    _saveTask = Timer(_saveTimeout, () => _storage.save(_data));
+    _saveTask = Timer(_saveTimeout, () {
+      return _storage.save(_data).catchError((e, st) {
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'state_persistence',
+          silent: true,
+        ));
+      });
+    });
   }
 }
 
@@ -175,11 +194,15 @@ abstract class PersistedStateStorage {
 
 /// Uses the default [JsonCodec], to store the persisted state.
 class JsonFileStorage extends PersistedStateStorage {
-  const JsonFileStorage({this.filename = 'data.json', this.initialData = const {}})
-      : assert(filename != null && initialData != null);
+  const JsonFileStorage({
+    this.filename = 'data.json',
+    this.initialData = const {},
+    this.clearDataOnLoadError = false,
+  }) : assert(filename != null && initialData != null && clearDataOnLoadError != null);
 
   final String filename;
   final Map<String, dynamic> initialData;
+  final bool clearDataOnLoadError;
 
   Future<File> get stateFile async {
     _appDataDir ??= await getApplicationDocumentsDirectory();
@@ -187,10 +210,24 @@ class JsonFileStorage extends PersistedStateStorage {
   }
 
   @override
-  Future<Map<String, dynamic>> load() {
-    return stateFile.then((file) async {
-      return await file.exists() ? json.decode(await file.readAsString()) : Map.from(initialData);
-    });
+  Future<Map<String, dynamic>> load() async {
+    final file = await stateFile;
+    if (await file.exists()) {
+      try {
+        return json.decode(await file.readAsString());
+      } catch (e, st) {
+        if (clearDataOnLoadError) {
+          await clear();
+        }
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'state_persistence',
+          silent: true,
+        ));
+      }
+    }
+    return Map.from(initialData);
   }
 
   @override
