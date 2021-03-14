@@ -9,7 +9,7 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  TextEditingController _textController;
+  TextEditingController? _textController;
 
   @override
   Widget build(BuildContext context) {
@@ -25,16 +25,17 @@ class _AppState extends State<App> {
             alignment: Alignment.center,
             child: PersistedStateBuilder(
               builder: (BuildContext context, AsyncSnapshot<PersistedData> snapshot) {
-                if (snapshot.hasData) {
+                final data = snapshot.data;
+                if (data != null) {
                   if (_textController == null) {
-                    _textController = TextEditingController(text: snapshot.data['text'] ?? '');
+                    _textController = TextEditingController(text: data['text'] ?? '');
                   }
                   return TextField(
                     controller: _textController,
                     decoration: InputDecoration(
                       hintText: 'Enter some text',
                     ),
-                    onChanged: (String value) => snapshot.data['text'] = value,
+                    onChanged: (String value) => data['text'] = value,
                   );
                 } else {
                   return CircularProgressIndicator();

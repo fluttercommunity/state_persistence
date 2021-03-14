@@ -25,22 +25,22 @@ class ExampleScreen1 extends StatefulWidget {
 }
 
 class _ExampleScreen1State extends State<ExampleScreen1> with SingleTickerProviderStateMixin {
-  PersistedData _data;
-  TabController _controller;
+  PersistedData? _data;
+  TabController? _controller;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _data = PersistedAppState.of(context);
-    if (_data != null && _controller == null) {
-      _controller = TabController(initialIndex: _data['tab'] ?? 0, vsync: this, length: 4);
-      _controller.addListener(_onTabChanged);
+    final data = _data = PersistedAppState.of(context);
+    if (data != null && _controller == null) {
+      _controller = TabController(initialIndex: data['tab'] ?? 0, vsync: this, length: 4);
+      _controller!.addListener(_onTabChanged);
     }
   }
 
   void _onTabChanged() {
-    if (!_controller.indexIsChanging) {
-      _data['tab'] = _controller.index;
+    if (!_controller!.indexIsChanging) {
+      _data!['tab'] = _controller!.index;
     }
   }
 

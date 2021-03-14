@@ -1,4 +1,6 @@
 # Changelog
+## 0.1.0
+  * Add Null Safety
 
 ## 0.0.7
   * Add `clearDataOnLoadError` feature.

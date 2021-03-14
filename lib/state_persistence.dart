@@ -9,17 +9,16 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart' show getApplicationDocumentsDirectory;
 
-Directory _appDataDir;
+Directory? _appDataDir;
 
 /// Add to your widget hierarchy to add app-wide state persistence.
 class PersistedAppState extends StatefulWidget {
   const PersistedAppState({
-    Key key,
+    Key? key,
     this.storage = const JsonFileStorage(),
     this.saveTimeout = const Duration(milliseconds: 500),
-    @required this.child,
-  })  : assert(storage != null && child != null),
-        super(key: key);
+    required this.child,
+  }) : super(key: key);
 
   /// Storage mechanism used to load/save app state.
   final PersistedStateStorage storage;
@@ -33,13 +32,12 @@ class PersistedAppState extends StatefulWidget {
 
   /// Used to fetch persisted data anywhere across the app.
   /// Results in null if data is not yet loaded.
-  static PersistedData of(BuildContext context) => snapshot(context)?.data;
+  static PersistedData? of(BuildContext context) => snapshot(context)?.data;
 
   /// Used to fetch the AsyncSnapshot of the persisted data.
   /// This allows you to monitor the progress of the loading data.
-  static AsyncSnapshot<PersistedData> snapshot(BuildContext context) {
-    final _PersistedScope scope = context.inheritFromWidgetOfExactType(_PersistedScope);
-    return scope.snapshot;
+  static AsyncSnapshot<PersistedData>? snapshot(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<_PersistedScope>()?.snapshot;
   }
 
   @override
@@ -47,8 +45,8 @@ class PersistedAppState extends StatefulWidget {
 }
 
 class _PersistedAppState extends State<PersistedAppState> {
-  Future<PersistedData> _future;
-  PersistedData _data;
+  late Future<PersistedData> _future;
+  PersistedData? _data;
 
   @override
   void initState() {
@@ -65,7 +63,9 @@ class _PersistedAppState extends State<PersistedAppState> {
   }
 
   void _loadData() {
-    _future = PersistedData.load(widget.storage, widget.saveTimeout).then((result) => _data = result);
+    _future = PersistedData.load(widget.storage, widget.saveTimeout).then(
+      (PersistedData result) => _data = result,
+    );
   }
 
   @override
@@ -85,11 +85,10 @@ class _PersistedAppState extends State<PersistedAppState> {
 
 class _PersistedScope extends InheritedWidget {
   const _PersistedScope({
-    Key key,
-    @required this.snapshot,
-    @required Widget child,
-  })  : assert(child != null),
-        super(key: key, child: child);
+    Key? key,
+    required this.snapshot,
+    required Widget child,
+  }) : super(key: key, child: child);
 
   final AsyncSnapshot<PersistedData> snapshot;
 
@@ -101,16 +100,15 @@ class _PersistedScope extends InheritedWidget {
 /// It will automatically rebuild when the persisted data is loaded.
 class PersistedStateBuilder extends StatelessWidget {
   const PersistedStateBuilder({
-    Key key,
-    @required this.builder,
-  })  : assert(builder != null),
-        super(key: key);
+    Key? key,
+    required this.builder,
+  }) : super(key: key);
 
   final AsyncWidgetBuilder<PersistedData> builder;
 
   @override
   Widget build(BuildContext context) {
-    return builder(context, PersistedAppState.snapshot(context));
+    return builder(context, PersistedAppState.snapshot(context)!);
   }
 }
 
@@ -121,55 +119,56 @@ class PersistedData extends MapBase<String, dynamic> {
   PersistedData._(this._storage, this._data, this._saveTimeout);
 
   final PersistedStateStorage _storage;
-  final Map<String, dynamic> _data;
+  final Map<String, dynamic>? _data;
   final Duration _saveTimeout;
-  Timer _saveTask;
+  Timer? _saveTask;
 
   static Future<PersistedData> load(PersistedStateStorage storage, Duration saveTimeout) async {
     return PersistedData._(
-        storage,
-        await storage.load().catchError((e, st) {
-          FlutterError.reportError(FlutterErrorDetails(
-            exception: e,
-            stack: st,
-            library: 'state_persistence',
-            silent: true,
-          ));
-        }),
-        saveTimeout);
+      storage,
+      await storage.load().catchError((e, st) {
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'state_persistence',
+          silent: true,
+        ));
+      }),
+      saveTimeout,
+    );
   }
 
   @override
-  Iterable<String> get keys => _data.keys;
+  Iterable<String> get keys => _data!.keys;
 
   @override
-  dynamic operator [](Object key) {
-    return _data[key];
+  dynamic operator [](Object? key) {
+    return _data![key as String];
   }
 
   @override
   void operator []=(String key, dynamic value) {
-    _data[key] = value;
+    _data![key] = value;
     persist();
   }
 
   @override
-  dynamic remove(Object key) {
-    final value = _data.remove(key);
+  dynamic remove(Object? key) {
+    final value = _data!.remove(key);
     persist();
     return value;
   }
 
   @override
   void clear() {
-    _data.clear();
+    _data!.clear();
     persist();
   }
 
   void persist() {
     _saveTask?.cancel();
     _saveTask = Timer(_saveTimeout, () {
-      return _storage.save(_data).catchError((e, st) {
+      _storage.save(_data).catchError((e, st) {
         FlutterError.reportError(FlutterErrorDetails(
           exception: e,
           stack: st,
@@ -185,9 +184,9 @@ class PersistedData extends MapBase<String, dynamic> {
 abstract class PersistedStateStorage {
   const PersistedStateStorage();
 
-  Future<Map<String, dynamic>> load();
+  Future<Map<String, dynamic>?> load();
 
-  Future<void> save(Map<String, dynamic> data);
+  Future<void> save(Map<String, dynamic>? data);
 
   Future<void> clear();
 }
@@ -198,7 +197,7 @@ class JsonFileStorage extends PersistedStateStorage {
     this.filename = 'data.json',
     this.initialData = const {},
     this.clearDataOnLoadError = false,
-  }) : assert(filename != null && initialData != null && clearDataOnLoadError != null);
+  });
 
   final String filename;
   final Map<String, dynamic> initialData;
@@ -206,11 +205,11 @@ class JsonFileStorage extends PersistedStateStorage {
 
   Future<File> get stateFile async {
     _appDataDir ??= await getApplicationDocumentsDirectory();
-    return File(p.join(_appDataDir.path, filename));
+    return File(p.join(_appDataDir!.path, filename));
   }
 
   @override
-  Future<Map<String, dynamic>> load() async {
+  Future<Map<String, dynamic>?> load() async {
     final file = await stateFile;
     if (await file.exists()) {
       try {
@@ -231,7 +230,7 @@ class JsonFileStorage extends PersistedStateStorage {
   }
 
   @override
-  Future<void> save(Map<String, dynamic> data) {
+  Future<void> save(Map<String, dynamic>? data) {
     return stateFile.then((file) => file.writeAsString(json.encode(data)));
   }
 
