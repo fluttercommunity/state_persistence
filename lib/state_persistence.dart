@@ -194,18 +194,24 @@ abstract class PersistedStateStorage {
 /// Uses the default [JsonCodec], to store the persisted state.
 class JsonFileStorage extends PersistedStateStorage {
   const JsonFileStorage({
+    this.appDataDir,
     this.filename = 'data.json',
     this.initialData = const {},
     this.clearDataOnLoadError = false,
   });
 
+  final Directory? appDataDir;
   final String filename;
   final Map<String, dynamic> initialData;
   final bool clearDataOnLoadError;
 
   Future<File> get stateFile async {
-    _appDataDir ??= await getApplicationDocumentsDirectory();
-    return File(p.join(_appDataDir!.path, filename));
+    if (appDataDir != null) {
+      return File(p.join(appDataDir!.path, filename));
+    } else {
+      _appDataDir ??= await getApplicationDocumentsDirectory();
+      return File(p.join(_appDataDir!.path, filename));
+    }
   }
 
   @override
